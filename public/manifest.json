@@ -1,0 +1,14 @@
+{
+    "version": "1.0.0",
+    "manifest_version": 3,
+    "name": "Tidy Tabs",
+    "description": "Helps with the organization of tabs, removes clutter.",
+    "action": {
+        "default_popup": "index.html",
+        "default_title": "Tidy Tabs"
+    },
+    "permissions": [
+        "tabs",
+        "storage"
+    ]
+}
