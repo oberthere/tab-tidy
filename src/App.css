@@ -96,3 +96,48 @@ p {
 .search-input::placeholder {
   color: #999;          
 }
+
+/* Update tab-item to make room for close button */
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  padding-right: 40px; /* Make room for close button */
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative; /* For absolute positioning of X */
+}
+
+/* Close button styles */
+.close-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.grouped .tab-item {
+  margin-left: 20px;
+  margin-bottom: 4px;
+}

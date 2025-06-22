@@ -8,16 +8,27 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [groupByDomain, setGroupByDomain] = useState(false)
 
-  useEffect(() => {
-    // get all tabs
+  const loadTabs = () => {
     chrome.tabs.query({}, (tabs: any) => {
       setTabs(tabs)
     })
+  }
+
+  useEffect(() => {
+    loadTabs()
   }, [])
 
   const handleTabClick = (tabId: number) => {
     // switches to the clicked tab
     chrome.tabs.update(tabId, { active: true})
+  }
+
+  const handleCloseTab = (tabId: number, event: React.MouseEvent) => {
+    event.stopPropagation() // Prevent tab from switching when clicking X
+    chrome.tabs.remove(tabId, () => {
+      // Reload tabs after closing
+      loadTabs()
+    })
   }
 
   // Get domain from URL
@@ -45,6 +56,35 @@ function App() {
     groups[domain].push(tab)
     return groups
   }, {})
+
+   // Tab component to avoid repetition
+  const TabItem = ({ tab }: { tab: any }) => (
+    <div 
+      key={tab.id}
+      className="tab-item"
+      onClick={() => handleTabClick(tab.id)}
+    >
+      {tab.favIconUrl && (
+        <img
+          src={tab.favIconUrl}
+          alt=""
+          className="favicon"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none'
+          }}
+        />
+      )}
+      <span className="tab-title">{tab.title}</span>
+      <button 
+        className="close-button"
+        onClick={(e) => handleCloseTab(tab.id, e)}
+        title="Close tab"
+      >
+        ×
+      </button>
+    </div>
+  )
+
 
   return (
     <div className="App">
@@ -75,46 +115,16 @@ function App() {
                 {domain} ({domainTabs.length})
               </h3>
               {domainTabs.map((tab: any) => (
-                <div 
-                  key={tab.id}
-                  className="tab-item grouped"
-                  onClick={() => handleTabClick(tab.id)}
-                >
-                  {tab.favIconUrl && (
-                    <img
-                      src={tab.favIconUrl}
-                      alt=""
-                      className="favicon"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none'
-                      }}
-                    />
-                  )}
-                  <span className="tab-title">{tab.title}</span>
+                <div key={tab.id} className="grouped">
+                  <TabItem tab={tab} />
                 </div>
               ))}
             </div>
           ))
         ) : (
-          // List view
+          // Regular list view
           filteredTabs.map((tab) => (
-            <div 
-              key={tab.id}
-              className="tab-item"
-              onClick={() => handleTabClick(tab.id)}
-            >
-              {tab.favIconUrl && (
-                <img
-                  src={tab.favIconUrl}
-                  alt=""
-                  className="favicon"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
-                  }}
-                />
-              )}
-              <span className="tab-title">{tab.title}</span>
-            </div>
+            <TabItem key={tab.id} tab={tab} />
           ))
         )}
       </div>
