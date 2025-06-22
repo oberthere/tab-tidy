@@ -5,6 +5,7 @@ declare const chrome: any;
 
 function App() {
   const [tabs, setTabs] = useState<any[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     // get all tabs
@@ -18,10 +19,24 @@ function App() {
     chrome.tabs.update(tabId, { active: true})
   }
 
+  // Filter tabs based on user search
+  const filteredTabs = tabs.filter(tab =>
+    tab.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    tab.url.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   return (
     <div className="App">
       <h1>Tidy Tabs</h1>
       <p>You have {tabs.length} tabs open</p>
+
+      <input
+        type="text"
+        placeholder="Search tabs..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="search-input"
+      />
     
       <div className="tab-list">
         {tabs.map((tab) => (
@@ -44,6 +59,10 @@ function App() {
           </div>
         ))}
       </div>
+
+      {filteredTabs.length === 0 && searchQuery && (
+        <p className="no-results">No tabs found matching "{searchQuery}"</p>
+      )}
     </div>
   )
 }

@@ -71,3 +71,28 @@ p {
   background: #888;
   border-radius: 3px;
 }
+
+/* Search Bar */
+
+.search-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  background-color: white; 
+  color: #333;            
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  border-color: #4CAF50;
+  background-color: white;  
+}
+
+.search-input::placeholder {
+  color: #999;          
+}
