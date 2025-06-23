@@ -141,3 +141,64 @@ p {
   margin-left: 20px;
   margin-bottom: 4px;
 }
+
+/* Action bar for buttons */
+.action-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.group-button {
+  flex: 1;
+  padding: 8px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+/* Checkbox styles */
+.tab-checkbox {
+  cursor: pointer;
+  margin: 0;
+}
+
+/* Selected tab style */
+.tab-item.selected {
+  background: #e3f2fd;
+  border-color: #2196F3;
+}
+
+/* Close selected button */
+.close-selected-button {
+  padding: 8px 16px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.close-selected-button:hover {
+  background: #d32f2f;
+}
+
+/* Update tab-item for checkbox */
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  padding-right: 40px;
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}

@@ -7,7 +7,9 @@ function App() {
   const [tabs, setTabs] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [groupByDomain, setGroupByDomain] = useState(false)
+  const [selectedTabs, setSelectedTabs] = useState<Set<number>>(new Set())
 
+  // refresh tab list from chrome api
   const loadTabs = () => {
     chrome.tabs.query({}, (tabs: any) => {
       setTabs(tabs)
@@ -18,22 +20,49 @@ function App() {
     loadTabs()
   }, [])
 
+  // handle clicking on a tab to switch to it
   const handleTabClick = (tabId: number) => {
-    // switches to the clicked tab
-    chrome.tabs.update(tabId, { active: true})
+    // only switch if not selecting
+    if (selectedTabs.size === 0) {
+      chrome.tabs.update(tabId, { active: true})
+    }
   }
 
+  // close a single tab
   const handleCloseTab = (tabId: number, event: React.MouseEvent) => {
-    event.stopPropagation() // Prevent tab from switching when clicking X
+    event.stopPropagation()
     chrome.tabs.remove(tabId, () => {
-      // Reload tabs after closing
       loadTabs()
     })
   }
 
-  // Get domain from URL
+  // toggle tab selection for bulk actions
+  const handleSelectTab = (tabId: number, event: React.MouseEvent) => {
+    event.stopPropagation()
+    // create new set to trigger re-render
+    const newSelected = new Set(selectedTabs)
+    if (newSelected.has(tabId)) {
+      newSelected.delete(tabId)
+    } else {
+      newSelected.add(tabId)
+    }
+    setSelectedTabs(newSelected)
+  }
+
+  // close all selected tabs at once
+  const handleCloseSelected = () => {
+    if (selectedTabs.size > 0) {
+      chrome.tabs.remove(Array.from(selectedTabs), () => {
+        setSelectedTabs(new Set())
+        loadTabs()
+      })
+    }
+  }
+
+  // get domain from URL
   const getDomain = (url: string) => {
     try {
+      // parse url and extract hostname
       const urlObj = new URL(url)
       return urlObj.hostname.replace('www.', '')
     } catch {
@@ -41,14 +70,15 @@ function App() {
     }
   }
 
-  // Filter tabs based on user search
-  const filteredTabs = tabs.filter(tab =>
+  // filter tabs based on search
+  const filteredTabs = tabs.filter(tab => 
     tab.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     tab.url.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // Group tabs by domain
+  // group tabs by domain
   const groupedTabs = filteredTabs.reduce((groups: any, tab) => {
+    // get domain for grouping
     const domain = getDomain(tab.url)
     if (!groups[domain]) {
       groups[domain] = []
@@ -57,13 +87,19 @@ function App() {
     return groups
   }, {})
 
-   // Tab component to avoid repetition
+  // tab component
   const TabItem = ({ tab }: { tab: any }) => (
     <div 
-      key={tab.id}
-      className="tab-item"
+      className={`tab-item ${selectedTabs.has(tab.id) ? 'selected' : ''}`}
       onClick={() => handleTabClick(tab.id)}
     >
+      <input
+        type="checkbox"
+        checked={selectedTabs.has(tab.id)}
+        onChange={(e) => handleSelectTab(tab.id, e as any)}
+        onClick={(e) => e.stopPropagation()}
+        className="tab-checkbox"
+      />
       {tab.favIconUrl && (
         <img
           src={tab.favIconUrl}
@@ -85,7 +121,6 @@ function App() {
     </div>
   )
 
-
   return (
     <div className="App">
       <h1>Tidy Tabs</h1>
@@ -99,16 +134,27 @@ function App() {
         className="search-input"
       />
 
-      <button 
-        onClick={() => setGroupByDomain(!groupByDomain)}
-        className="group-button"
-      >
-        {groupByDomain ? 'List View' : 'Group by Site'}
-      </button>
+      <div className="action-bar">
+        <button 
+          onClick={() => setGroupByDomain(!groupByDomain)}
+          className="group-button"
+        >
+          {groupByDomain ? 'List View' : 'Group by Site'}
+        </button>
+        
+        {selectedTabs.size > 0 && (
+          <button 
+            onClick={handleCloseSelected}
+            className="close-selected-button"
+          >
+            Close {selectedTabs.size} tabs
+          </button>
+        )}
+      </div>
     
       <div className="tab-list">
         {groupByDomain ? (
-          // Grouped view
+          // grouped view
           Object.entries(groupedTabs).map(([domain, domainTabs]: [string, any]) => (
             <div key={domain} className="domain-group">
               <h3 className="domain-header">
@@ -122,7 +168,7 @@ function App() {
             </div>
           ))
         ) : (
-          // Regular list view
+          // regular list view
           filteredTabs.map((tab) => (
             <TabItem key={tab.id} tab={tab} />
           ))
