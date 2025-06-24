@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import './App.css'
 import TabItem from './components/TabItem'
+import { useDebounce } from './hooks/useDebounce'
 
 declare const chrome: any
 
@@ -21,6 +22,8 @@ function App() {
   const [groupByDomain, setGroupByDomain] = useState(false)
   // list of selected tab ids for bulk actions
   const [selectedTabs, setSelectedTabs] = useState<number[]>([])
+  const debouncedQuery = useDebounce(searchQuery, 200)
+
 
   // refresh tab list from chrome api
   const loadTabs = () => {
@@ -97,10 +100,11 @@ function App() {
   // filter tabs based on search
   const filteredTabs = useMemo(() => {
     return tabs.filter(tab =>
-      tab.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tab.url.toLowerCase().includes(searchQuery.toLowerCase())
+      tab.title.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+      tab.url.toLowerCase().includes(debouncedQuery.toLowerCase())
     )
-  }, [tabs, searchQuery])
+  }, [tabs, debouncedQuery])
+
 
   // group tabs by domain
   const groupedTabs = useMemo(() => {
