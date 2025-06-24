@@ -1,17 +1,29 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
-declare const chrome: any;
+declare const chrome: any
+
+// define tab interface to replace `any`
+interface Tab {
+  id: number
+  url: string
+  title: string
+  favIconUrl?: string
+}
 
 function App() {
-  const [tabs, setTabs] = useState<any[]>([])
+  // all open browser tabs
+  const [tabs, setTabs] = useState<Tab[]>([])
+  // current search filter text
   const [searchQuery, setSearchQuery] = useState('')
+  // toggle for domain grouping view
   const [groupByDomain, setGroupByDomain] = useState(false)
+  // set of selected tab ids for bulk actions
   const [selectedTabs, setSelectedTabs] = useState<Set<number>>(new Set())
 
   // refresh tab list from chrome api
   const loadTabs = () => {
-    chrome.tabs.query({}, (tabs: any) => {
+    chrome.tabs.query({}, (tabs: Tab[]) => {
       setTabs(tabs)
     })
   }
@@ -24,7 +36,7 @@ function App() {
   const handleTabClick = (tabId: number) => {
     // only switch if not selecting
     if (selectedTabs.size === 0) {
-      chrome.tabs.update(tabId, { active: true})
+      chrome.tabs.update(tabId, { active: true })
     }
   }
 
@@ -77,7 +89,7 @@ function App() {
   )
 
   // group tabs by domain
-  const groupedTabs = filteredTabs.reduce((groups: any, tab) => {
+  const groupedTabs = filteredTabs.reduce((groups: Record<string, Tab[]>, tab) => {
     // get domain for grouping
     const domain = getDomain(tab.url)
     if (!groups[domain]) {
@@ -88,7 +100,7 @@ function App() {
   }, {})
 
   // tab component
-  const TabItem = ({ tab }: { tab: any }) => (
+  const TabItem = ({ tab }: { tab: Tab }) => (
     <div 
       className={`tab-item ${selectedTabs.has(tab.id) ? 'selected' : ''}`}
       onClick={() => handleTabClick(tab.id)}
@@ -155,12 +167,12 @@ function App() {
       <div className="tab-list">
         {groupByDomain ? (
           // grouped view
-          Object.entries(groupedTabs).map(([domain, domainTabs]: [string, any]) => (
+          Object.entries(groupedTabs).map(([domain, domainTabs]: [string, Tab[]]) => (
             <div key={domain} className="domain-group">
               <h3 className="domain-header">
                 {domain} ({domainTabs.length})
               </h3>
-              {domainTabs.map((tab: any) => (
+              {domainTabs.map((tab: Tab) => (
                 <div key={tab.id} className="grouped">
                   <TabItem tab={tab} />
                 </div>
@@ -169,7 +181,7 @@ function App() {
           ))
         ) : (
           // regular list view
-          filteredTabs.map((tab) => (
+          filteredTabs.map((tab: Tab) => (
             <TabItem key={tab.id} tab={tab} />
           ))
         )}
