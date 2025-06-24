@@ -18,8 +18,8 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   // toggle for domain grouping view
   const [groupByDomain, setGroupByDomain] = useState(false)
-  // set of selected tab ids for bulk actions
-  const [selectedTabs, setSelectedTabs] = useState<Set<number>>(new Set())
+  // list of selected tab ids for bulk actions
+  const [selectedTabs, setSelectedTabs] = useState<number[]>([])
 
   // refresh tab list from chrome api
   const loadTabs = () => {
@@ -35,7 +35,7 @@ function App() {
   // handle clicking on a tab to switch to it
   const handleTabClick = (tabId: number) => {
     // only switch if not selecting
-    if (selectedTabs.size === 0) {
+    if (selectedTabs.length === 0) {
       chrome.tabs.update(tabId, { active: true })
     }
   }
@@ -51,21 +51,18 @@ function App() {
   // toggle tab selection for bulk actions
   const handleSelectTab = (tabId: number, event: React.MouseEvent) => {
     event.stopPropagation()
-    // create new set to trigger re-render
-    const newSelected = new Set(selectedTabs)
-    if (newSelected.has(tabId)) {
-      newSelected.delete(tabId)
-    } else {
-      newSelected.add(tabId)
-    }
-    setSelectedTabs(newSelected)
+    setSelectedTabs(prev =>
+      prev.includes(tabId)
+        ? prev.filter(id => id !== tabId)
+        : [...prev, tabId]
+    )
   }
 
   // close all selected tabs at once
   const handleCloseSelected = () => {
-    if (selectedTabs.size > 0) {
-      chrome.tabs.remove(Array.from(selectedTabs), () => {
-        setSelectedTabs(new Set())
+    if (selectedTabs.length > 0) {
+      chrome.tabs.remove(selectedTabs, () => {
+        setSelectedTabs([])
         loadTabs()
       })
     }
@@ -83,7 +80,7 @@ function App() {
   }
 
   // filter tabs based on search
-  const filteredTabs = tabs.filter(tab => 
+  const filteredTabs = tabs.filter(tab =>
     tab.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     tab.url.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -101,13 +98,13 @@ function App() {
 
   // tab component
   const TabItem = ({ tab }: { tab: Tab }) => (
-    <div 
-      className={`tab-item ${selectedTabs.has(tab.id) ? 'selected' : ''}`}
+    <div
+      className={`tab-item ${selectedTabs.includes(tab.id) ? 'selected' : ''}`}
       onClick={() => handleTabClick(tab.id)}
     >
       <input
         type="checkbox"
-        checked={selectedTabs.has(tab.id)}
+        checked={selectedTabs.includes(tab.id)}
         onChange={(e) => handleSelectTab(tab.id, e as any)}
         onClick={(e) => e.stopPropagation()}
         className="tab-checkbox"
@@ -123,7 +120,7 @@ function App() {
         />
       )}
       <span className="tab-title">{tab.title}</span>
-      <button 
+      <button
         className="close-button"
         onClick={(e) => handleCloseTab(tab.id, e)}
         title="Close tab"
@@ -137,7 +134,7 @@ function App() {
     <div className="App">
       <h1>Tidy Tabs</h1>
       <p>You have {tabs.length} tabs open</p>
-      
+
       <input
         type="text"
         placeholder="Search tabs..."
@@ -147,23 +144,23 @@ function App() {
       />
 
       <div className="action-bar">
-        <button 
+        <button
           onClick={() => setGroupByDomain(!groupByDomain)}
           className="group-button"
         >
           {groupByDomain ? 'List View' : 'Group by Site'}
         </button>
-        
-        {selectedTabs.size > 0 && (
-          <button 
+
+        {selectedTabs.length > 0 && (
+          <button
             onClick={handleCloseSelected}
             className="close-selected-button"
           >
-            Close {selectedTabs.size} tabs
+            Close {selectedTabs.length} tabs
           </button>
         )}
       </div>
-    
+
       <div className="tab-list">
         {groupByDomain ? (
           // grouped view
@@ -186,7 +183,7 @@ function App() {
           ))
         )}
       </div>
-      
+
       {filteredTabs.length === 0 && searchQuery && (
         <p className="no-results">No tabs found matching "{searchQuery}"</p>
       )}
