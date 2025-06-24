@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import './App.css'
+import TabItem from './components/TabItem'
 
 declare const chrome: any
 
@@ -23,15 +24,14 @@ function App() {
 
   // refresh tab list from chrome api
   const loadTabs = () => {
-  chrome.tabs.query({}, (tabs: Tab[]) => {
-    if (chrome.runtime.lastError) {
-      console.error('Failed to load tabs:', chrome.runtime.lastError.message)
-      return
-    }
-    setTabs(tabs)
-  })
-}
-
+    chrome.tabs.query({}, (tabs: Tab[]) => {
+      if (chrome.runtime.lastError) {
+        console.error('Failed to load tabs:', chrome.runtime.lastError.message)
+        return
+      }
+      setTabs(tabs)
+    })
+  }
 
   useEffect(() => {
     loadTabs()
@@ -41,7 +41,11 @@ function App() {
   const handleTabClick = (tabId: number) => {
     // only switch if not selecting
     if (selectedTabs.length === 0) {
-      chrome.tabs.update(tabId, { active: true })
+      chrome.tabs.update(tabId, { active: true }, () => {
+        if (chrome.runtime.lastError) {
+          console.error('Failed to activate tab:', chrome.runtime.lastError.message)
+        }
+      })
     }
   }
 
@@ -55,7 +59,6 @@ function App() {
       }
       loadTabs()
     })
-
   }
 
   // toggle tab selection for bulk actions
@@ -78,7 +81,6 @@ function App() {
       setSelectedTabs([])
       loadTabs()
     })
-
   }
 
   // get domain from URL
@@ -112,41 +114,6 @@ function App() {
       return groups
     }, {})
   }, [filteredTabs])
-
-
-  // tab component
-  const TabItem = ({ tab }: { tab: Tab }) => (
-    <div
-      className={`tab-item ${selectedTabs.includes(tab.id) ? 'selected' : ''}`}
-      onClick={() => handleTabClick(tab.id)}
-    >
-      <input
-        type="checkbox"
-        checked={selectedTabs.includes(tab.id)}
-        onChange={(e) => handleSelectTab(tab.id, e as any)}
-        onClick={(e) => e.stopPropagation()}
-        className="tab-checkbox"
-      />
-      {tab.favIconUrl && (
-        <img
-          src={tab.favIconUrl}
-          alt=""
-          className="favicon"
-          onError={(e) => {
-            e.currentTarget.style.display = 'none'
-          }}
-        />
-      )}
-      <span className="tab-title">{tab.title}</span>
-      <button
-        className="close-button"
-        onClick={(e) => handleCloseTab(tab.id, e)}
-        title="Close tab"
-      >
-        ×
-      </button>
-    </div>
-  )
 
   return (
     <div className="App">
@@ -189,7 +156,13 @@ function App() {
               </h3>
               {domainTabs.map((tab: Tab) => (
                 <div key={tab.id} className="grouped">
-                  <TabItem tab={tab} />
+                  <TabItem
+                    tab={tab}
+                    isSelected={selectedTabs.includes(tab.id)}
+                    onClick={() => handleTabClick(tab.id)}
+                    onCheckboxChange={(e) => handleSelectTab(tab.id, e)}
+                    onClose={(e) => handleCloseTab(tab.id, e)}
+                  />
                 </div>
               ))}
             </div>
@@ -197,7 +170,14 @@ function App() {
         ) : (
           // regular list view
           filteredTabs.map((tab: Tab) => (
-            <TabItem key={tab.id} tab={tab} />
+            <TabItem
+              key={tab.id}
+              tab={tab}
+              isSelected={selectedTabs.includes(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
+              onCheckboxChange={(e) => handleSelectTab(tab.id, e)}
+              onClose={(e) => handleCloseTab(tab.id, e)}
+            />
           ))
         )}
       </div>
