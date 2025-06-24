@@ -45,6 +45,11 @@ function App() {
     } 
   }, [])
 
+  // load current browser tabs
+  useEffect(() => {
+    loadTabs()
+  }, [])
+
   // handle clicking on a tab to switch to it
   const handleTabClick = (tabId: number) => {
     // only switch if not selecting
