@@ -202,3 +202,40 @@ p {
   transition: all 0.2s;
   position: relative;
 }
+
+.session-list {
+  list-style: none;
+  padding: 0;
+}
+
+.session-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.session-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.rename-button, .delete-button {
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.delete-button {
+  background: #fee;
+  border-color: #fcc;
+  color: #c33;
+}
+
+.rename-button:hover, .delete-button:hover {
+  opacity: 0.8;
+}

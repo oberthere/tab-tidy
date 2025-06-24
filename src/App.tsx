@@ -22,10 +22,11 @@ function App() {
   const [groupByDomain, setGroupByDomain] = useState(false)
   // list of selected tab ids for bulk actions
   const [selectedTabs, setSelectedTabs] = useState<number[]>([])
-  const debouncedQuery = useDebounce(searchQuery, 200)
+  // saved sessions
   const [sessions, setSessions] = useState<Record<string, Tab[]>>({})
   const [newSessionName, setNewSessionName] = useState('')
-
+  
+  const debouncedQuery = useDebounce(searchQuery, 200)
 
   // refresh tab list from chrome api
   const loadTabs = () => {
@@ -45,7 +46,7 @@ function App() {
     } 
   }, [])
 
-  // load current browser tabs
+  // Load tabs on component mount
   useEffect(() => {
     loadTabs()
   }, [])
@@ -115,7 +116,6 @@ function App() {
     )
   }, [tabs, debouncedQuery])
 
-
   // group tabs by domain
   const groupedTabs = useMemo(() => {
     return filteredTabs.reduce((groups: Record<string, Tab[]>, tab) => {
@@ -149,6 +149,24 @@ function App() {
     }
   }
 
+  // Delete a session
+  const handleDeleteSession = (sessionName: string) => {
+    const updatedSessions = { ...sessions }
+    delete updatedSessions[sessionName]
+    setSessions(updatedSessions)
+    localStorage.setItem('tidyTabSessions', JSON.stringify(updatedSessions))
+  }
+
+  // Rename a session
+  const handleRenameSession = (oldName: string, newName: string) => {
+    if (!newName.trim() || newName === oldName) return
+    
+    const updatedSessions = { ...sessions }
+    updatedSessions[newName.trim()] = updatedSessions[oldName]
+    delete updatedSessions[oldName]
+    setSessions(updatedSessions)
+    localStorage.setItem('tidyTabSessions', JSON.stringify(updatedSessions))
+  }
 
   return (
   <div className="App">
@@ -239,12 +257,40 @@ function App() {
         <p>No sessions saved yet.</p>
       )}
 
-      <ul>
+      <ul className="session-list">
         {Object.entries(sessions).map(([name, sessionTabs]) => (
-          <li key={name}>
-            <button onClick={() => handleRestoreSession(sessionTabs)}>
-              Restore "{name}" ({sessionTabs.length} tabs)
-            </button>
+          <li key={name} className="session-item">
+            <div className="session-info">
+              <button 
+                onClick={() => handleRestoreSession(sessionTabs)}
+                className="restore-button"
+              >
+                Restore "{name}" ({sessionTabs.length} tabs)
+              </button>
+            </div>
+            
+            <div className="session-actions">
+              <button 
+                onClick={() => {
+                  const newName = prompt('Enter new name:', name)
+                  if (newName) handleRenameSession(name, newName)
+                }}
+                className="rename-button"
+              >
+                Rename
+              </button>
+              
+              <button 
+                onClick={() => {
+                  if (confirm(`Delete session "${name}"?`)) {
+                    handleDeleteSession(name)
+                  }
+                }}
+                className="delete-button"
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
