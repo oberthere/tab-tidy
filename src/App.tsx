@@ -2,9 +2,6 @@ import { useState, useEffect, useMemo } from 'react'
 import './App.css'
 import TabItem from './components/TabItem'
 import { useDebounce } from './hooks/useDebounce'
-const [sessions, setSessions] = useState<Record<string, Tab[]>>({})
-const [newSessionName, setNewSessionName] = useState('')
-
 
 declare const chrome: any
 
@@ -26,6 +23,8 @@ function App() {
   // list of selected tab ids for bulk actions
   const [selectedTabs, setSelectedTabs] = useState<number[]>([])
   const debouncedQuery = useDebounce(searchQuery, 200)
+  const [sessions, setSessions] = useState<Record<string, Tab[]>>({})
+  const [newSessionName, setNewSessionName] = useState('')
 
 
   // refresh tab list from chrome api
