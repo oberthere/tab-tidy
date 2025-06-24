@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import './App.css'
 
 declare const chrome: any
@@ -80,21 +80,26 @@ function App() {
   }
 
   // filter tabs based on search
-  const filteredTabs = tabs.filter(tab =>
-    tab.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tab.url.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredTabs = useMemo(() => {
+    return tabs.filter(tab =>
+      tab.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tab.url.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [tabs, searchQuery])
 
   // group tabs by domain
-  const groupedTabs = filteredTabs.reduce((groups: Record<string, Tab[]>, tab) => {
-    // get domain for grouping
-    const domain = getDomain(tab.url)
-    if (!groups[domain]) {
-      groups[domain] = []
-    }
-    groups[domain].push(tab)
-    return groups
-  }, {})
+  const groupedTabs = useMemo(() => {
+    return filteredTabs.reduce((groups: Record<string, Tab[]>, tab) => {
+      // get domain for grouping
+      const domain = getDomain(tab.url)
+      if (!groups[domain]) {
+        groups[domain] = []
+      }
+      groups[domain].push(tab)
+      return groups
+    }, {})
+  }, [filteredTabs])
+
 
   // tab component
   const TabItem = ({ tab }: { tab: Tab }) => (
