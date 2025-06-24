@@ -23,10 +23,15 @@ function App() {
 
   // refresh tab list from chrome api
   const loadTabs = () => {
-    chrome.tabs.query({}, (tabs: Tab[]) => {
-      setTabs(tabs)
-    })
-  }
+  chrome.tabs.query({}, (tabs: Tab[]) => {
+    if (chrome.runtime.lastError) {
+      console.error('Failed to load tabs:', chrome.runtime.lastError.message)
+      return
+    }
+    setTabs(tabs)
+  })
+}
+
 
   useEffect(() => {
     loadTabs()
@@ -44,8 +49,13 @@ function App() {
   const handleCloseTab = (tabId: number, event: React.MouseEvent) => {
     event.stopPropagation()
     chrome.tabs.remove(tabId, () => {
+      if (chrome.runtime.lastError) {
+        console.error('Failed to close tab:', chrome.runtime.lastError.message)
+        return
+      }
       loadTabs()
     })
+
   }
 
   // toggle tab selection for bulk actions
@@ -60,12 +70,15 @@ function App() {
 
   // close all selected tabs at once
   const handleCloseSelected = () => {
-    if (selectedTabs.length > 0) {
-      chrome.tabs.remove(selectedTabs, () => {
-        setSelectedTabs([])
-        loadTabs()
-      })
-    }
+    chrome.tabs.remove(selectedTabs, () => {
+      if (chrome.runtime.lastError) {
+        console.error('Failed to close selected tabs:', chrome.runtime.lastError.message)
+        return
+      }
+      setSelectedTabs([])
+      loadTabs()
+    })
+
   }
 
   // get domain from URL
