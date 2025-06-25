@@ -1,34 +1,49 @@
 import { useState, useEffect } from 'react'
-import { Tab } from '../components/TabItem' // or wherever it's defined
+import type { Tab } from '../types'
 
-export function useTabSessions() {
+declare const chrome: any
+
+export const useTabSessions = (currentTabs: Tab[]) => {
   const [sessions, setSessions] = useState<Record<string, Tab[]>>({})
 
   useEffect(() => {
-    const saved = localStorage.getItem('tidyTabSessions')
-    if (saved) setSessions(JSON.parse(saved))
+    // Use chrome.storage.local instead of localStorage for Chrome extensions
+    chrome.storage.local.get(['tidyTabSessions'], (result: any) => {
+      if (result.tidyTabSessions) {
+        setSessions(result.tidyTabSessions)
+      }
+    })
   }, [])
 
-  const saveSession = (name: string, tabs: Tab[]) => {
-    const updated = { ...sessions, [name]: tabs }
+  const saveSession = (name: string) => {
+    if (!name.trim()) return
+    const updated = { ...sessions, [name.trim()]: currentTabs }
     setSessions(updated)
-    localStorage.setItem('tidyTabSessions', JSON.stringify(updated))
+    chrome.storage.local.set({ tidyTabSessions: updated })
   }
 
   const deleteSession = (name: string) => {
     const updated = { ...sessions }
     delete updated[name]
     setSessions(updated)
-    localStorage.setItem('tidyTabSessions', JSON.stringify(updated))
+    chrome.storage.local.set({ tidyTabSessions: updated })
   }
 
   const renameSession = (oldName: string, newName: string) => {
-    if (!newName.trim() || newName === oldName) return
-    const updated = { ...sessions }
-    updated[newName.trim()] = updated[oldName]
+    if (!newName.trim() || oldName === newName) return
+    const updated = {
+      ...sessions,
+      [newName.trim()]: sessions[oldName],
+    }
     delete updated[oldName]
     setSessions(updated)
-    localStorage.setItem('tidyTabSessions', JSON.stringify(updated))
+    chrome.storage.local.set({ tidyTabSessions: updated })
+  }
+
+  const restoreSession = (tabsToRestore: Tab[]) => {
+    for (const tab of tabsToRestore) {
+      chrome.tabs.create({ url: tab.url })
+    }
   }
 
   return {
@@ -36,5 +51,6 @@ export function useTabSessions() {
     saveSession,
     deleteSession,
     renameSession,
+    restoreSession,
   }
 }

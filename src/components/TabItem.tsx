@@ -1,11 +1,5 @@
 import React from 'react'
-
-export interface Tab {
-  id: number
-  url: string
-  title: string
-  favIconUrl?: string
-}
+import type { Tab } from '../types'
 
 interface TabItemProps {
   tab: Tab
@@ -22,6 +16,23 @@ const TabItem: React.FC<TabItemProps> = ({
   onCheckboxChange,
   onClose,
 }) => {
+  // Get favicon URL with fallback
+  const getFaviconUrl = (tab: Tab) => {
+    if (tab.favIconUrl) {
+      return tab.favIconUrl
+    }
+    
+    // Fallback to Google's favicon service
+    try {
+      const url = new URL(tab.url)
+      return `https://www.google.com/s2/favicons?domain=${url.hostname}&sz=32`
+    } catch {
+      return null
+    }
+  }
+
+  const faviconUrl = getFaviconUrl(tab)
+
   return (
     <div className={`tab-item ${isSelected ? 'selected' : ''}`} onClick={onClick}>
       <input
@@ -31,9 +42,9 @@ const TabItem: React.FC<TabItemProps> = ({
         onClick={onCheckboxChange}
         className="tab-checkbox"
       />
-      {tab.favIconUrl && (
+      {faviconUrl && (
         <img
-          src={tab.favIconUrl}
+          src={faviconUrl}
           alt=""
           className="favicon"
           onError={(e) => {

@@ -1,34 +1,30 @@
 import { useState, useEffect, useMemo } from 'react'
 import './App.css'
-import TabItem from './components/TabItem'
+import TabList from './components/TabList'
+import SessionManager from './components/SessionManager'
 import { useDebounce } from './hooks/useDebounce'
+import { useTabSessions } from './hooks/useTabSessions'
+import type { Tab } from './types/index'
 
 declare const chrome: any
 
-// define tab interface to replace `any`
-interface Tab {
-  id: number
-  url: string
-  title: string
-  favIconUrl?: string
-}
-
 function App() {
-  // all open browser tabs
   const [tabs, setTabs] = useState<Tab[]>([])
-  // current search filter text
   const [searchQuery, setSearchQuery] = useState('')
-  // toggle for domain grouping view
   const [groupByDomain, setGroupByDomain] = useState(false)
-  // list of selected tab ids for bulk actions
   const [selectedTabs, setSelectedTabs] = useState<number[]>([])
-  // saved sessions
-  const [sessions, setSessions] = useState<Record<string, Tab[]>>({})
-  const [newSessionName, setNewSessionName] = useState('')
-  
   const debouncedQuery = useDebounce(searchQuery, 200)
 
-  // refresh tab list from chrome api
+  // Tab sessions logic (extracted to custom hook)
+  const {
+    sessions,
+    saveSession,
+    deleteSession,
+    renameSession,
+    restoreSession,
+  } = useTabSessions(tabs)
+
+  // refresh open tab list
   const loadTabs = () => {
     chrome.tabs.query({}, (tabs: Tab[]) => {
       if (chrome.runtime.lastError) {
@@ -40,20 +36,11 @@ function App() {
   }
 
   useEffect(() => {
-    const saved = localStorage.getItem('tidyTabSessions')
-    if (saved) {
-      setSessions(JSON.parse(saved))
-    } 
-  }, [])
-
-  // Load tabs on component mount
-  useEffect(() => {
     loadTabs()
   }, [])
 
-  // handle clicking on a tab to switch to it
+  // handle clicking on a tab
   const handleTabClick = (tabId: number) => {
-    // only switch if not selecting
     if (selectedTabs.length === 0) {
       chrome.tabs.update(tabId, { active: true }, () => {
         if (chrome.runtime.lastError) {
@@ -75,7 +62,7 @@ function App() {
     })
   }
 
-  // toggle tab selection for bulk actions
+  // toggle selected tab
   const handleSelectTab = (tabId: number, event: React.MouseEvent) => {
     event.stopPropagation()
     setSelectedTabs(prev =>
@@ -85,7 +72,7 @@ function App() {
     )
   }
 
-  // close all selected tabs at once
+  // close all selected tabs
   const handleCloseSelected = () => {
     chrome.tabs.remove(selectedTabs, () => {
       if (chrome.runtime.lastError) {
@@ -97,18 +84,15 @@ function App() {
     })
   }
 
-  // get domain from URL
+  // extract domain from URL
   const getDomain = (url: string) => {
     try {
-      // parse url and extract hostname
-      const urlObj = new URL(url)
-      return urlObj.hostname.replace('www.', '')
+      return new URL(url).hostname.replace('www.', '')
     } catch {
       return 'other'
     }
   }
 
-  // filter tabs based on search
   const filteredTabs = useMemo(() => {
     return tabs.filter(tab =>
       tab.title.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
@@ -116,188 +100,60 @@ function App() {
     )
   }, [tabs, debouncedQuery])
 
-  // group tabs by domain
-  const groupedTabs = useMemo(() => {
-    return filteredTabs.reduce((groups: Record<string, Tab[]>, tab) => {
-      // get domain for grouping
-      const domain = getDomain(tab.url)
-      if (!groups[domain]) {
-        groups[domain] = []
-      }
-      groups[domain].push(tab)
-      return groups
-    }, {})
-  }, [filteredTabs])
-
-  // saves session to localStorage
-  const handleSaveSession = () => {
-    if (!newSessionName.trim()) return 
-
-    const updatedSessions = {
-      ...sessions,
-      [newSessionName.trim()]: tabs,
-    }
-    setSessions(updatedSessions)
-    localStorage.setItem('tidyTabSessions', JSON.stringify(updatedSessions))
-    setNewSessionName('')
-  }
-
-  // restores session
-  const handleRestoreSession = (sessionTabs: Tab[]) => {
-    for (const tab of sessionTabs) {
-      chrome.tabs.create({ url: tab.url })
-    }
-  }
-
-  // Delete a session
-  const handleDeleteSession = (sessionName: string) => {
-    const updatedSessions = { ...sessions }
-    delete updatedSessions[sessionName]
-    setSessions(updatedSessions)
-    localStorage.setItem('tidyTabSessions', JSON.stringify(updatedSessions))
-  }
-
-  // Rename a session
-  const handleRenameSession = (oldName: string, newName: string) => {
-    if (!newName.trim() || newName === oldName) return
-    
-    const updatedSessions = { ...sessions }
-    updatedSessions[newName.trim()] = updatedSessions[oldName]
-    delete updatedSessions[oldName]
-    setSessions(updatedSessions)
-    localStorage.setItem('tidyTabSessions', JSON.stringify(updatedSessions))
-  }
-
   return (
-  <div className="App">
-    <h1>Tidy Tabs</h1>
-    <p>You have {tabs.length} tabs open</p>
+    <div className="App">
+      <h1>Tidy Tabs</h1>
+      <p>You have {tabs.length} tabs open</p>
 
-    <input
-      type="text"
-      placeholder="Search tabs..."
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      className="search-input"
-    />
+      <input
+        type="text"
+        placeholder="Search tabs..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="search-input"
+      />
 
-    <div className="action-bar">
-      <button
-        onClick={() => setGroupByDomain(!groupByDomain)}
-        className="group-button"
-      >
-        {groupByDomain ? 'List View' : 'Group by Site'}
-      </button>
-
-      {selectedTabs.length > 0 && (
+      <div className="action-bar">
         <button
-          onClick={handleCloseSelected}
-          className="close-selected-button"
+          onClick={() => setGroupByDomain(!groupByDomain)}
+          className="group-button"
         >
-          Close {selectedTabs.length} tabs
+          {groupByDomain ? 'List View' : 'Group by Site'}
         </button>
-      )}
-    </div>
 
-    <div className="tab-list">
-      {groupByDomain ? (
-        // grouped view
-        Object.entries(groupedTabs).map(([domain, domainTabs]: [string, Tab[]]) => (
-          <div key={domain} className="domain-group">
-            <h3 className="domain-header">
-              {domain} ({domainTabs.length})
-            </h3>
-            {domainTabs.map((tab: Tab) => (
-              <div key={tab.id} className="grouped">
-                <TabItem
-                  tab={tab}
-                  isSelected={selectedTabs.includes(tab.id)}
-                  onClick={() => handleTabClick(tab.id)}
-                  onCheckboxChange={(e) => handleSelectTab(tab.id, e)}
-                  onClose={(e) => handleCloseTab(tab.id, e)}
-                />
-              </div>
-            ))}
-          </div>
-        ))
-      ) : (
-        // regular list view
-        filteredTabs.map((tab: Tab) => (
-          <TabItem
-            key={tab.id}
-            tab={tab}
-            isSelected={selectedTabs.includes(tab.id)}
-            onClick={() => handleTabClick(tab.id)}
-            onCheckboxChange={(e) => handleSelectTab(tab.id, e)}
-            onClose={(e) => handleCloseTab(tab.id, e)}
-          />
-        ))
-      )}
-    </div>
-
-    {filteredTabs.length === 0 && searchQuery && (
-      <p className="no-results">No tabs found matching "{searchQuery}"</p>
-    )}
-
-    {/* Saved Sessions UI */}
-    <div className="session-manager">
-      <h3>Saved Sessions</h3>
-
-      <div className="session-save-form">
-        <input
-          type="text"
-          placeholder="Session name"
-          value={newSessionName}
-          onChange={(e) => setNewSessionName(e.target.value)}
-        />
-        <button onClick={handleSaveSession}>Save Tabs</button>
+        {selectedTabs.length > 0 && (
+          <button
+            onClick={handleCloseSelected}
+            className="close-selected-button"
+          >
+            Close {selectedTabs.length} tabs
+          </button>
+        )}
       </div>
 
-      {Object.entries(sessions).length === 0 && (
-        <p>No sessions saved yet.</p>
+      <TabList
+        tabs={filteredTabs}
+        groupByDomain={groupByDomain}     
+        selectedTabs={selectedTabs}
+        getDomain={getDomain}           
+        onTabClick={handleTabClick}   
+        onTabSelect={handleSelectTab}     
+        onTabClose={handleCloseTab}     
+      />
+
+      {filteredTabs.length === 0 && searchQuery && (
+        <p className="no-results">No tabs found matching "{searchQuery}"</p>
       )}
 
-      <ul className="session-list">
-        {Object.entries(sessions).map(([name, sessionTabs]) => (
-          <li key={name} className="session-item">
-            <div className="session-info">
-              <button 
-                onClick={() => handleRestoreSession(sessionTabs)}
-                className="restore-button"
-              >
-                Restore "{name}" ({sessionTabs.length} tabs)
-              </button>
-            </div>
-            
-            <div className="session-actions">
-              <button 
-                onClick={() => {
-                  const newName = prompt('Enter new name:', name)
-                  if (newName) handleRenameSession(name, newName)
-                }}
-                className="rename-button"
-              >
-                Rename
-              </button>
-              
-              <button 
-                onClick={() => {
-                  if (confirm(`Delete session "${name}"?`)) {
-                    handleDeleteSession(name)
-                  }
-                }}
-                className="delete-button"
-              >
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <SessionManager
+        sessions={sessions}
+        onSave={saveSession}
+        onRestore={restoreSession}
+        onRename={renameSession}
+        onDelete={deleteSession}
+      />
     </div>
-  </div>
-)
-
+  )
 }
 
 export default App
