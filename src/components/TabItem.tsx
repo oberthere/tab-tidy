@@ -1,5 +1,5 @@
 import React from 'react'
-import type { Tab } from '../types'
+import type { Tab } from '../types/index'
 
 interface TabItemProps {
   tab: Tab
@@ -25,7 +25,7 @@ const TabItem: React.FC<TabItemProps> = ({
     // Fallback to Google's favicon service
     try {
       const url = new URL(tab.url)
-      return `https://www.google.com/s2/favicons?domain=${url.hostname}&sz=32`
+      return `https://www.google.com/s2/favicons?domain=${url.hostname}&sz=16`
     } catch {
       return null
     }
@@ -42,17 +42,19 @@ const TabItem: React.FC<TabItemProps> = ({
         onClick={onCheckboxChange}
         className="tab-checkbox"
       />
-      {faviconUrl && (
-        <img
-          src={faviconUrl}
-          alt=""
-          className="favicon"
-          onError={(e) => {
-            e.currentTarget.style.display = 'none'
-          }}
-        />
-      )}
-      <span className="tab-title">{tab.title}</span>
+      <div className="tab-content">
+        {faviconUrl && (
+          <img
+            src={faviconUrl}
+            alt=""
+            className="favicon"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
+          />
+        )}
+        <span className="tab-title">{tab.title}</span>
+      </div>
       <button className="close-button" onClick={onClose} title="Close tab">
         ×
       </button>

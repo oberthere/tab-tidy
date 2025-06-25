@@ -34,7 +34,9 @@ const SessionManager: React.FC<SessionManagerProps> = ({
           value={newSessionName}
           onChange={(e) => setNewSessionName(e.target.value)}
         />
-        <button onClick={handleSave}>Save Tabs</button>
+        <button onClick={handleSave} disabled={!newSessionName.trim()}>
+          Save Tabs
+        </button>
       </div>
 
       {Object.entries(sessions).length === 0 && (
