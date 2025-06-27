@@ -5,22 +5,20 @@ import type { Tab } from '../types'
 interface TabListProps {
   tabs: Tab[]
   groupByDomain: boolean
-  selectedTabs: number[]
   getDomain: (url: string) => string
   onTabClick: (id: number) => void
-  onTabSelect: (id: number, e: React.MouseEvent) => void
   onTabClose: (id: number, e: React.MouseEvent) => void
+  onCloseMultiple: (tabIds: number[]) => void
 }
 
 const TabList: React.FC<TabListProps> = ({
   tabs,
   groupByDomain,
-  selectedTabs,
   getDomain,
   onTabClick,
-  onTabSelect,
   onTabClose,
-}) => { 
+  onCloseMultiple,
+}) => {
   // Render grouped view when toggle is active
   if (groupByDomain) {
     const grouped = tabs.reduce((acc: Record<string, Tab[]>, tab) => {
@@ -34,16 +32,22 @@ const TabList: React.FC<TabListProps> = ({
       <div className="tab-list">
         {Object.entries(grouped).map(([domain, domainTabs]) => (
           <div key={domain} className="domain-group">
-            <h3 className="domain-header">
-              {domain} ({domainTabs.length})
-            </h3>
+            <div className="domain-header">
+              <h3>
+                {domain} ({domainTabs.length})
+              </h3>
+              <button
+                className="close-domain-button"
+                onClick={() => onCloseMultiple(domainTabs.map(tab => tab.id))}
+              >
+                Close All
+              </button>
+            </div>
             {domainTabs.map((tab) => (
               <div key={tab.id} className="grouped">
                 <TabItem
                   tab={tab}
-                  isSelected={selectedTabs.includes(tab.id)}
                   onClick={() => onTabClick(tab.id)}
-                  onCheckboxChange={(e) => onTabSelect(tab.id, e)}
                   onClose={(e) => onTabClose(tab.id, e)}
                 />
               </div>
@@ -53,6 +57,7 @@ const TabList: React.FC<TabListProps> = ({
       </div>
     )
   }
+
   // Render list view
   return (
     <div className="tab-list">
@@ -60,9 +65,7 @@ const TabList: React.FC<TabListProps> = ({
         <TabItem
           key={tab.id}
           tab={tab}
-          isSelected={selectedTabs.includes(tab.id)}
           onClick={() => onTabClick(tab.id)}
-          onCheckboxChange={(e) => onTabSelect(tab.id, e)}
           onClose={(e) => onTabClose(tab.id, e)}
         />
       ))}

@@ -3,17 +3,13 @@ import type { Tab } from '../types/index'
 
 interface TabItemProps {
   tab: Tab
-  isSelected: boolean
   onClick: () => void
-  onCheckboxChange: (e: React.MouseEvent) => void
   onClose: (e: React.MouseEvent) => void
 }
 
 const TabItem: React.FC<TabItemProps> = ({
   tab,
-  isSelected,
   onClick,
-  onCheckboxChange,
   onClose,
 }) => {
   // Get favicon URL with fallback
@@ -21,7 +17,7 @@ const TabItem: React.FC<TabItemProps> = ({
     if (tab.favIconUrl) {
       return tab.favIconUrl
     }
-    
+
     // Fallback to Google's favicon service
     try {
       const url = new URL(tab.url)
@@ -34,7 +30,7 @@ const TabItem: React.FC<TabItemProps> = ({
   const faviconUrl = getFaviconUrl(tab)
 
   return (
-    <div className={`tab-item ${isSelected ? 'selected' : ''}`} onClick={onClick}>
+    <div className="tab-item" onClick={onClick}>
       <div className="tab-content">
         {faviconUrl && (
           <img

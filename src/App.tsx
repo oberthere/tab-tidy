@@ -12,7 +12,6 @@ function App() {
   const [tabs, setTabs] = useState<Tab[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [groupByDomain, setGroupByDomain] = useState(false)
-  const [selectedTabs, setSelectedTabs] = useState<number[]>([])
   const debouncedQuery = useDebounce(searchQuery, 200)
 
   // Tab sessions logic (extracted to custom hook)
@@ -41,13 +40,11 @@ function App() {
 
   // handle clicking on a tab
   const handleTabClick = (tabId: number) => {
-    if (selectedTabs.length === 0) {
-      chrome.tabs.update(tabId, { active: true }, () => {
-        if (chrome.runtime.lastError) {
-          console.error('Failed to activate tab:', chrome.runtime.lastError.message)
-        }
-      })
-    }
+    chrome.tabs.update(tabId, { active: true }, () => {
+      if (chrome.runtime.lastError) {
+        console.error('Failed to activate tab:', chrome.runtime.lastError.message)
+      }
+    })
   }
 
   // close a single tab
@@ -62,24 +59,13 @@ function App() {
     })
   }
 
-  // toggle selected tab
-  const handleSelectTab = (tabId: number, event: React.MouseEvent) => {
-    event.stopPropagation()
-    setSelectedTabs(prev =>
-      prev.includes(tabId)
-        ? prev.filter(id => id !== tabId)
-        : [...prev, tabId]
-    )
-  }
-
-  // close all selected tabs
-  const handleCloseSelected = () => {
-    chrome.tabs.remove(selectedTabs, () => {
+  // close multiple tabs (e.g. all tabs from a domain group)
+  const handleCloseMultiple = (tabIds: number[]) => {
+    chrome.tabs.remove(tabIds, () => {
       if (chrome.runtime.lastError) {
-        console.error('Failed to close selected tabs:', chrome.runtime.lastError.message)
+        console.error('Failed to close tabs:', chrome.runtime.lastError.message)
         return
       }
-      setSelectedTabs([])
       loadTabs()
     })
   }
@@ -120,25 +106,15 @@ function App() {
         >
           {groupByDomain ? 'List View' : 'Group by Site'}
         </button>
-
-        {selectedTabs.length > 0 && (
-          <button
-            onClick={handleCloseSelected}
-            className="close-selected-button"
-          >
-            Close {selectedTabs.length} tabs
-          </button>
-        )}
       </div>
 
       <TabList
         tabs={filteredTabs}
-        groupByDomain={groupByDomain}     
-        selectedTabs={selectedTabs}
-        getDomain={getDomain}           
-        onTabClick={handleTabClick}   
-        onTabSelect={handleSelectTab}     
-        onTabClose={handleCloseTab}     
+        groupByDomain={groupByDomain}
+        getDomain={getDomain}
+        onTabClick={handleTabClick}
+        onTabClose={handleCloseTab}
+        onCloseMultiple={handleCloseMultiple}
       />
 
       {filteredTabs.length === 0 && searchQuery && (
