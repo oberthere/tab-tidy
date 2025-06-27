@@ -35,13 +35,6 @@ const TabItem: React.FC<TabItemProps> = ({
 
   return (
     <div className={`tab-item ${isSelected ? 'selected' : ''}`} onClick={onClick}>
-      <input
-        type="checkbox"
-        checked={isSelected}
-        onChange={() => {}}
-        onClick={onCheckboxChange}
-        className="tab-checkbox"
-      />
       <div className="tab-content">
         {faviconUrl && (
           <img
