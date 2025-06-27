@@ -38,6 +38,45 @@ function App() {
     loadTabs()
   }, [])
 
+  // Add real-time tab monitoring
+  useEffect(() => {
+    // Listen for tab updates
+    const handleTabUpdated = (_tabId: number, changeInfo: any, _tab: Tab) => {
+      if (changeInfo.status === 'complete' || changeInfo.favIconUrl || changeInfo.title) {
+        loadTabs()
+      }
+    }
+
+    // Listen for tab removal
+    const handleTabRemoved = (_tabId: number) => {
+      loadTabs()
+    }
+
+    // Listen for new tabs
+    const handleTabCreated = (_tab: Tab) => {
+      loadTabs()
+    }
+
+    // Listen for tab moves
+    const handleTabMoved = (_tabId: number) => {
+      loadTabs()
+    }
+
+    // Add listeners
+    chrome.tabs.onUpdated.addListener(handleTabUpdated)
+    chrome.tabs.onRemoved.addListener(handleTabRemoved)
+    chrome.tabs.onCreated.addListener(handleTabCreated)
+    chrome.tabs.onMoved.addListener(handleTabMoved)
+
+    // Cleanup
+    return () => {
+      chrome.tabs.onUpdated.removeListener(handleTabUpdated)
+      chrome.tabs.onRemoved.removeListener(handleTabRemoved)
+      chrome.tabs.onCreated.removeListener(handleTabCreated)
+      chrome.tabs.onMoved.removeListener(handleTabMoved)
+    }
+  }, [])
+
   // handle clicking on a tab
   const handleTabClick = (tabId: number) => {
     chrome.tabs.update(tabId, { active: true }, () => {
@@ -55,7 +94,7 @@ function App() {
         console.error('Failed to close tab:', chrome.runtime.lastError.message)
         return
       }
-      loadTabs()
+      // No need to loadTabs() - listener will handle it
     })
   }
 
@@ -66,7 +105,7 @@ function App() {
         console.error('Failed to close tabs:', chrome.runtime.lastError.message)
         return
       }
-      loadTabs()
+      // No need to loadTabs() - listener will handle it
     })
   }
 
