@@ -16,110 +16,101 @@ const SessionManager: React.FC<SessionManagerProps> = ({
   onRename,
   onDelete,
 }) => {
-  const [newSessionName, setNewSessionName] = useState('')
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [sessionName, setSessionName] = useState('')
 
   const handleSave = () => {
-    onSave(newSessionName)
-    setNewSessionName('')
+    const trimmed = sessionName.trim()
+    if (trimmed) {
+      onSave(trimmed)
+      setSessionName('')
+    }
   }
 
-  const formatDate = (timestamp: number) => {
+  const formatDate = (timestamp: number | undefined) => {
+    if (!timestamp) return ''
     const date = new Date(timestamp)
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    return `${date.toLocaleDateString()} • ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
   }
 
-  const getSessionInfo = (session: SessionData | any) => {
-    // Handle both old format (array) and new format (SessionData)
+  const getSessionInfo = (session: SessionData) => {
     if (Array.isArray(session)) {
-      return { tabCount: session.length, isLegacy: true }
+      return { tabCount: session.length, isLegacy: true, domains: 0, timestamp: undefined }
     }
     return {
       tabCount: session.metadata?.tabCount || session.tabs?.length || 0,
-      pinnedCount: session.metadata?.pinnedCount || 0,
-      domains: session.metadata?.domains || 0,
+      domains: session.metadata?.domains ?? 0,
       timestamp: session.timestamp,
       isLegacy: false
     }
   }
 
   return (
-    <div className="session-manager">
-      <h3>Saved Sessions</h3>
+    <div className="session-container">
+      <button onClick={() => setIsExpanded(!isExpanded)} className="session-toggle">
+        <span style={{ fontSize: '16px' }}>Session Manager</span>
+        <svg
+          className={`arrow-icon ${isExpanded ? 'rotate' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
-      <div className="session-save-form">
-        <input
-          type="text"
-          placeholder="Session name"
-          value={newSessionName}
-          onChange={(e) => setNewSessionName(e.target.value)}
-          onKeyPress={(e) => {
-            if (e.key === 'Enter' && newSessionName.trim()) {
-              handleSave()
-            }
-          }}
-        />
-        <button onClick={handleSave} disabled={!newSessionName.trim()}>
-          Save Tabs
-        </button>
-      </div>
+      {isExpanded && (
+        <div className="session-panel">
+          <div className="session-save">
+            <input
+              type="text"
+              placeholder="Session name..."
+              value={sessionName}
+              onChange={(e) => setSessionName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+            />
+            <button onClick={handleSave}>Save</button>
+          </div>
 
-      {Object.entries(sessions).length === 0 && (
-        <p>No sessions saved yet.</p>
-      )}
+          <div className="session-list">
+            {Object.entries(sessions).map(([name, session]) => {
+              const info = getSessionInfo(session)
 
-      <ul className="session-list">
-        {Object.entries(sessions).map(([name, sessionData]) => {
-          const info = getSessionInfo(sessionData)
-          
-          return (
-            <li key={name} className="session-item">
-              <div className="session-info">
-                <button
-                  onClick={() => onRestore(sessionData)}
-                  className="restore-button"
-                >
-                  Restore "{name}"
-                </button>
-                <div className="session-details">
-                  <span>{info.tabCount} tabs</span>
-                  {!info.isLegacy && (
-                    <>
-                      {info.pinnedCount > 0 && <span> • {info.pinnedCount} pinned</span>}
-                      {info.domains > 0 && <span> • {info.domains} sites</span>}
-                      {info.timestamp && (
-                        <span className="session-date"> • {formatDate(info.timestamp)}</span>
+              return (
+                <div key={name} className="session-item-card">
+                  <div>
+                    <h4>{name}</h4>
+                    <p>
+                      {info.tabCount} tabs
+                      {!info.isLegacy && (
+                        <>
+                          {info.domains > 0 && ` • ${info.domains} sites`}
+                          {info.timestamp && ` • ${formatDate(info.timestamp)}`}
+                        </>
                       )}
-                    </>
-                  )}
+                    </p>
+                  </div>
+                  <div className="session-actions">
+                    <button className="restore" onClick={() => onRestore(session)}>Restore</button>
+                    <button
+                      className="rename"
+                      onClick={() => {
+                        const newName = prompt('New name:', name)
+                        if (newName && newName.trim()) {
+                          onRename(name, newName.trim())
+                        }
+                      }}
+                    >
+                      Rename
+                    </button>
+                    <button className="delete" onClick={() => onDelete(name)}>Delete</button>
+                  </div>
                 </div>
-              </div>
-
-              <div className="session-actions">
-                <button
-                  onClick={() => {
-                    const newName = prompt('Enter new name:', name)
-                    if (newName) onRename(name, newName)
-                  }}
-                  className="rename-button"
-                >
-                  Rename
-                </button>
-
-                <button
-                  onClick={() => {
-                    if (confirm(`Delete session "${name}"?`)) {
-                      onDelete(name)
-                    }
-                  }}
-                  className="delete-button"
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          )
-        })}
-      </ul>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

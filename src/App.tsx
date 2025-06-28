@@ -147,28 +147,36 @@ function App() {
         </button>
       </div>
 
-      <TabList
-        tabs={filteredTabs}
-        groupByDomain={groupByDomain}
-        getDomain={getDomain}
-        onTabClick={handleTabClick}
-        onTabClose={handleCloseTab}
-        onCloseMultiple={handleCloseMultiple}
-      />
+      {/* Scrollable Tab Area */}
+      <div className="AppContent">
+        <TabList
+          tabs={filteredTabs}
+          groupByDomain={groupByDomain}
+          getDomain={getDomain}
+          onTabClick={handleTabClick}
+          onTabClose={handleCloseTab}
+          onCloseMultiple={handleCloseMultiple}
+        />
 
-      {filteredTabs.length === 0 && searchQuery && (
-        <p className="no-results">No tabs found matching "{searchQuery}"</p>
-      )}
+        {filteredTabs.length === 0 && searchQuery && (
+          <p className="no-results">No tabs found matching "{searchQuery}"</p>
+        )}
+      </div>
 
-      <SessionManager
-        sessions={sessions}
-        onSave={saveSession}
-        onRestore={restoreSession}
-        onRename={renameSession}
-        onDelete={deleteSession}
-      />
+      {/* Collapsible Session Manager */}
+      <div className="session-dropdown">
+        <SessionManager
+          sessions={sessions}
+          onSave={saveSession}
+          onRestore={restoreSession}
+          onRename={renameSession}
+          onDelete={deleteSession}
+        />
+      </div>
+
     </div>
   )
+
 }
 
 export default App

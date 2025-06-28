@@ -1,43 +1,120 @@
-.App {
-  width: 380px;
-  min-height: 500px;
-  padding: 16px;
+/* Ensure root fills popup container */
+html, body, #root, .App {
+  height: 100%;
+  margin: 0;
+  padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: white;
-  color: #1a1a1a;
+  font-size: 14px;
+  color: #1f2937;
+  line-height: 1.4;
 }
 
+/* App layout */
+.App {
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  width: 380px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+/* Scrollable area for tab list */
+.AppContent {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Title & subtitle */
 h1 {
   font-size: 20px;
   margin: 0 0 8px 0;
-  color: #1a1a1a;
+  color: #1f2937;
 }
 
 p {
-  color: #4a4a4a;
   margin: 0 0 16px 0;
   font-weight: 500;
 }
 
+/* Search */
+.search-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  background-color: white;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  border-color: #4CAF50;
+  background-color: white;
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+/* Group by button */
+.action-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.group-button {
+  flex: 1;
+  padding: 8px;
+  background-color: #3b82f6;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.group-button:hover {
+  background-color: #2563eb;
+}
+
+/* Tab list */
 .tab-list {
+  flex: 1;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 400px;
-  overflow-y: auto;
+  padding-right: 6px;
+  margin-bottom: 12px;
 }
 
-/* Updated tab-item styles */
+/* Tab item */
 .tab-item {
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s;
-  position: relative;
   background: #f8f8f8;
   border: 1px solid #e0e0e0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .tab-item:hover {
@@ -54,7 +131,7 @@ p {
   align-items: center;
   flex: 1;
   gap: 8px;
-  margin-left: 8px;
+  min-width: 0; 
 }
 
 .favicon {
@@ -65,11 +142,18 @@ p {
 
 .tab-title {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 14px;
   color: #2a2a2a;
+}
+
+.tab-checkbox {
+  cursor: pointer;
+  margin: 0;
+  accent-color: #2196F3;
 }
 
 .close-button {
@@ -93,118 +177,154 @@ p {
 .tab-list::-webkit-scrollbar {
   width: 6px;
 }
-
 .tab-list::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
-
 .tab-list::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 3px;
 }
 
-/* Search Bar */
-.search-input {
+/* Collapsible Saved Sessions */
+.session-container {
+  margin-top: 16px;
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+
+.session-toggle {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 16px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-  background-color: white; 
-  color: #333;            
-  box-sizing: border-box;
-}
-
-.search-input:focus {
-  border-color: #4CAF50;
-  background-color: white;  
-}
-
-.search-input::placeholder {
-  color: #999;          
-}
-
-.grouped .tab-item {
-  margin-left: 20px;
-  margin-bottom: 4px;
-}
-
-/* Action bar for buttons */
-.action-bar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.group-button {
-  flex: 1;
-  padding: 8px;
-  background: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background 0.2s;
-}
-
-/* Checkbox styles */
-.tab-checkbox {
-  cursor: pointer;
-  margin: 0;
-}
-
-/* Close selected button */
-.close-selected-button {
-  padding: 8px 16px;
-  background: #f44336;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background 0.2s;
-}
-
-.close-selected-button:hover {
-  background: #d32f2f;
-}
-
-.session-list {
-  list-style: none;
-  padding: 0;
-}
-
-.session-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
+  padding: 12px;
+  background-color: #f9fafb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 16px;
+  color: #1f2937;
+  transition: background-color 0.2s ease;
+}
+
+.session-toggle:hover {
+  background-color: #f3f4f6;
+}
+
+.arrow-icon {
+  width: 20px;
+  height: 20px;
+  color: #4b5563;
+  transition: transform 0.2s ease;
+}
+
+.arrow-icon.rotate {
+  transform: rotate(180deg);
+}
+
+.session-panel {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.session-save {
+  display: flex;
+  gap: 8px;
+}
+
+.session-save input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+  color: #111827;
+}
+
+.session-save input:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.session-save button {
+  padding: 8px 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.session-save button:hover {
+  background-color: #2563eb;
+}
+
+.session-item-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.session-item-card h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.session-item-card p {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: #6b7280;
 }
 
 .session-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
-.rename-button, .delete-button {
-  padding: 4px 8px;
-  font-size: 12px;
-  border: 1px solid #ccc;
-  background: white;
+.session-actions button {
+  padding: 6px 12px;
+  font-size: 13px;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
-  border-radius: 3px;
+  transition: background-color 0.2s;
 }
 
-.delete-button {
-  background: #fee;
-  border-color: #fcc;
-  color: #c33;
+.session-actions .restore {
+  background-color: #10b981;
+  color: white;
 }
 
-.rename-button:hover, .delete-button:hover {
-  opacity: 0.8;
+.session-actions .restore:hover {
+  background-color: #059669;
+}
+
+.session-actions .rename {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.session-actions .rename:hover {
+  background-color: #d1d5db;
+}
+
+.session-actions .delete {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.session-actions .delete:hover {
+  background-color: #fecaca;
 }
