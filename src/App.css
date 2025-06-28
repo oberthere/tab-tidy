@@ -328,3 +328,33 @@ p {
 .session-actions .delete:hover {
   background-color: #fecaca;
 }
+
+.domain-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  margin-top: 12px;
+}
+
+.group-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.close-group-button {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  height: 28px;
+}
+
+.close-group-button:hover {
+  background-color: #fecaca;
+}

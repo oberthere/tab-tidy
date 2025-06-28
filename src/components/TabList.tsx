@@ -33,16 +33,15 @@ const TabList: React.FC<TabListProps> = ({
         {Object.entries(grouped).map(([domain, domainTabs]) => (
           <div key={domain} className="domain-group">
             <div className="domain-header">
-              <h3>
-                {domain} ({domainTabs.length})
-              </h3>
+              <span className="group-title">{domain} ({domainTabs.length})</span>
               <button
-                className="close-domain-button"
+                className="close-group-button"
                 onClick={() => onCloseMultiple(domainTabs.map(tab => tab.id))}
               >
                 Close All
               </button>
             </div>
+
             {domainTabs.map((tab) => (
               <div key={tab.id} className="grouped">
                 <TabItem
